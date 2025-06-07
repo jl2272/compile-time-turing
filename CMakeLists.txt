@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.21)
 
 # Only set the cxx_standard if it is not set by someone else
 if (NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 23)
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 
 # strongly encouraged to enable this globally to avoid conflicts between
@@ -28,7 +28,6 @@ include(ProjectOptions.cmake)
 
 compile_time_turing_setup_options()
 
-compile_time_turing_global_options()
 include(Dependencies.cmake)
 compile_time_turing_setup_dependencies()
 
@@ -54,12 +53,6 @@ add_library(compile_time_turing::compile_time_turing_warnings ALIAS compile_time
 #add_library(compile_time_turing::compile_time_turing_options INTERFACE IMPORTED)
 #add_library(compile_time_turing::compile_time_turing_warnings INTERFACE IMPORTED)
 
-# configure files based on CMake configuration options
-add_subdirectory(configured_files)
-
-# Adding the src:
-add_subdirectory(src)
-
 # Don't even look at tests if we're not top level
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()
@@ -69,18 +62,7 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
-  message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
   add_subdirectory(test)
-endif()
-
-
-if(compile_time_turing_BUILD_FUZZ_TESTS)
-  message(AUTHOR_WARNING "Building Fuzz Tests, using fuzzing sanitizer https://www.llvm.org/docs/LibFuzzer.html")
-  if (NOT compile_time_turing_ENABLE_SANITIZER_ADDRESS AND NOT compile_time_turing_ENABLE_SANITIZER_THREAD)
-    message(WARNING "You need asan or tsan enabled for meaningful fuzz testing")
-  endif()
-  add_subdirectory(fuzz_test)
-
 endif()
 
 # If MSVC is being used, and ASAN is enabled, we need to set the debugger environment
@@ -104,7 +86,6 @@ include(cmake/PackageProject.cmake)
 # we know we want to ship
 compile_time_turing_package_project(
   TARGETS
-  intro
   compile_time_turing_options
   compile_time_turing_warnings
   # FIXME: this does not work! CK
