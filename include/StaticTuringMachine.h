@@ -1,5 +1,5 @@
 #pragma once
-#include <Concepts.h>
+#include <SpecificationConcepts.h>
 #include <Direction.h>
 
 namespace turing {
