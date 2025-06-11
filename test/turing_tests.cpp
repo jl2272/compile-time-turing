@@ -1,7 +1,8 @@
-
+#include <Configuration.h>
 #include <Direction.h>
 #include <StaticTuringMachine.h>
 
+#include <array>
 #include <cstdint>
 #include <tuple>
 
@@ -11,7 +12,7 @@ namespace turing {
 
 enum class TestAlphabet : uint64_t { A = 0, B = 1, START = 2, END = 3, COUNT = 4 };
 
-enum class TestStates : uint64_t { A = 0, B = 1, COUNT = 2};
+enum class TestStates : uint64_t { A = 0, B = 1, COUNT = 2 };
 
 static constexpr auto testTransitionFunction = [](TestStates, TestAlphabet) {
   return std::make_tuple(TestStates::A, TestAlphabet::START, Direction::UNCHANGED);
@@ -21,4 +22,14 @@ static constexpr auto testTransitionFunction = [](TestStates, TestAlphabet) {
 
 using namespace turing;
 
-int main() { return StaticTuringMachine<TestAlphabet, TestStates, decltype(testTransitionFunction)>::x; }
+static constexpr std::array testArray{ TestAlphabet::START, TestAlphabet::END };
+static constexpr Configuration<TestAlphabet, TestStates, std::array<TestAlphabet, 2>> config{ testArray,
+  TestStates::A,
+  0 };
+static constexpr auto outArray =
+  StaticTuringMachine<TestAlphabet, TestStates, decltype(testTransitionFunction)>::compute<2, config>();
+
+int main()
+{
+  return 0;
+}

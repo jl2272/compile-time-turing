@@ -34,13 +34,15 @@ concept IsTransitionFunction = requires(T func) {
   } -> std::convertible_to<std::tuple<std::variant<State, SpecialState>, Alphabet, Direction>>;
 
   // Check we cannot overwrite the start symbol, or go left of start.
-    requires []() {
-        for (uint64_t state = 0; state < static_cast<uint64_t>(State::COUNT); state++) {
-          if (auto [_, nextSymbol, nextDir] = T()(static_cast<State>(state), Alphabet::START);
-                nextDir == Direction::LEFT || nextSymbol != Alphabet::START)
-                return false;
-        }
+  requires[]()
+  {
+    for (uint64_t state = 0; state < static_cast<uint64_t>(State::COUNT); state++) {
+      if (auto [_, nextSymbol, nextDir] = T()(static_cast<State>(state), Alphabet::START);
+          nextDir == Direction::LEFT || nextSymbol != Alphabet::START)
+        return false;
+    }
     return true;
-    }();
-  };
+  }
+  ();
+};
 }// namespace turing
