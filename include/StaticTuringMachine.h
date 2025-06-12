@@ -16,6 +16,8 @@ public:
   template<size_t InputSize, Configuration<Alphabet, State, std::array<Alphabet, InputSize>> input>
   static consteval auto compute()
   {
+    static_assert(input.tape.front() == Alphabet::START);
+    static_assert(input.tape.back() == Alphabet::END);
 
     // Decomposition declaration not allowed for constexpr values.
     constexpr auto transitionResult = transition(input.state, input.tape[input.head]);
@@ -24,21 +26,21 @@ public:
     constexpr auto nextDirection = std::get<2>(transitionResult);
 
     constexpr size_t NextSize = []() {
-      if (nextDirection == Direction::RIGHT && input.head == InputSize - 1) {
+      if (nextDirection == Direction::RIGHT && input.head == InputSize - 2) {
         return InputSize + 1;
       } else {
         return InputSize;
       }
     }();
 
-    constexpr auto populate = [&](auto in) {
+    constexpr auto populate = [&]() {
       std::array<Alphabet, NextSize> out;
       out.back() = Alphabet::END;
       for (size_t i = 0; i < input.tape.size(); i++) { out[i] = input.tape[i]; }
       out[input.head] = nextSymbol;
       return out;
     };
-    constexpr std::array<Alphabet, NextSize> out = populate(input);
+    constexpr std::array<Alphabet, NextSize> out = populate();
 
     constexpr size_t nextHead = [&]() {
       size_t nextHead_;
