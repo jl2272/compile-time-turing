@@ -6,76 +6,119 @@
 #include <array>
 #include <cstdint>
 #include <tuple>
+#include <type_traits>
 #include <variant>
 
 using namespace turing;
 
-enum class CopyAlphabet : uint64_t { ZERO = 0, ONE = 1, START = 2, END = 3, COUNT = 4 };
+// This tests a basic turing machine that prepends a single zero to the given input.
+namespace PrependTest {
 
-enum class CopyStates : uint64_t { S = 0, R0 = 1, R1 = 2, L = 3, COUNT = 4 };
+// Define alphabet, states and transition function for the test.
+enum class Alphabet : uint64_t { ZERO = 0, ONE = 1, START = 2, END = 3, COUNT = 4 };
 
-static constexpr auto CopyTransitionFunction =
-  [](CopyStates state,
-    CopyAlphabet alphabet) -> std::tuple<std::variant<CopyStates, SpecialState>, CopyAlphabet, Direction> {
+enum class States : uint64_t { S = 0, R0 = 1, R1 = 2, L = 3, COUNT = 4 };
+
+static constexpr auto TransitionFunction =
+  [](States state, Alphabet alphabet) -> std::tuple<std::variant<States, SpecialState>, Alphabet, Direction> {
   switch (state) {
-  case (CopyStates::S):
+  case (States::S):
     switch (alphabet) {
-    case (CopyAlphabet::START):
-      return { CopyStates::R0, CopyAlphabet::START, Direction::RIGHT };
+    case (Alphabet::START):
+      return { States::R0, Alphabet::START, Direction::RIGHT };
     default:
-      return { SpecialState::HALT, CopyAlphabet::START, Direction::UNCHANGED };
+      return { SpecialState::HALT, Alphabet::START, Direction::UNCHANGED };
     }
-  case (CopyStates::R0):
+  case (States::R0):
     switch (alphabet) {
-    case (CopyAlphabet::ZERO):
-      return { CopyStates::R0, CopyAlphabet::ZERO, Direction::RIGHT };
-    case (CopyAlphabet::ONE):
-      return { CopyStates::R1, CopyAlphabet::ZERO, Direction::RIGHT };
-    case (CopyAlphabet::END):
-      return { CopyStates::L, CopyAlphabet::ZERO, Direction::LEFT };
+    case (Alphabet::ZERO):
+      return { States::R0, Alphabet::ZERO, Direction::RIGHT };
+    case (Alphabet::ONE):
+      return { States::R1, Alphabet::ZERO, Direction::RIGHT };
+    case (Alphabet::END):
+      return { States::L, Alphabet::ZERO, Direction::LEFT };
     default:
-      return { SpecialState::HALT, CopyAlphabet::START, Direction::UNCHANGED };
+      return { SpecialState::HALT, Alphabet::START, Direction::UNCHANGED };
     }
-  case (CopyStates::R1):
+  case (States::R1):
     switch (alphabet) {
-    case (CopyAlphabet::ZERO):
-      return { CopyStates::R0, CopyAlphabet::ONE, Direction::RIGHT };
-    case (CopyAlphabet::ONE):
-      return { CopyStates::R1, CopyAlphabet::ONE, Direction::RIGHT };
-    case (CopyAlphabet::END):
-      return { CopyStates::L, CopyAlphabet::ONE, Direction::LEFT };
+    case (Alphabet::ZERO):
+      return { States::R0, Alphabet::ONE, Direction::RIGHT };
+    case (Alphabet::ONE):
+      return { States::R1, Alphabet::ONE, Direction::RIGHT };
+    case (Alphabet::END):
+      return { States::L, Alphabet::ONE, Direction::LEFT };
     default:
-      return { SpecialState::HALT, CopyAlphabet::START, Direction::UNCHANGED };
+      return { SpecialState::HALT, Alphabet::START, Direction::UNCHANGED };
     }
-  case (CopyStates::L):
+  case (States::L):
     switch (alphabet) {
-    case (CopyAlphabet::ZERO):
-      return { CopyStates::L, CopyAlphabet::ZERO, Direction::LEFT };
-    case (CopyAlphabet::ONE):
-      return { CopyStates::L, CopyAlphabet::ONE, Direction::LEFT };
-    case (CopyAlphabet::START):
-      return { SpecialState::HALT, CopyAlphabet::START, Direction::UNCHANGED };
+    case (Alphabet::ZERO):
+      return { States::L, Alphabet::ZERO, Direction::LEFT };
+    case (Alphabet::ONE):
+      return { States::L, Alphabet::ONE, Direction::LEFT };
+    case (Alphabet::START):
+      return { SpecialState::HALT, Alphabet::START, Direction::UNCHANGED };
     default:
-      return { SpecialState::HALT, CopyAlphabet::START, Direction::LEFT };
+      return { SpecialState::HALT, Alphabet::START, Direction::LEFT };
     }
   default:
-    return { SpecialState::HALT, CopyAlphabet::START, Direction::UNCHANGED };
+    return { SpecialState::HALT, Alphabet::START, Direction::UNCHANGED };
   }
 };
 
+// Test 1
+namespace test1 {
+  // Define initial state.
+  static constexpr std::array initialArray{ Alphabet::START, Alphabet::ONE, Alphabet::ONE, Alphabet::END };
+  static constexpr Configuration<Alphabet, States, std::decay_t<decltype(initialArray)>> initialConfiguration{
+    initialArray,
+    States::S,
+    0
+  };
 
-static constexpr std::array testArray{ CopyAlphabet::START, CopyAlphabet::ONE, CopyAlphabet::ONE, CopyAlphabet::END };
-static constexpr Configuration<CopyAlphabet, CopyStates, std::array<CopyAlphabet, 4>> config{ testArray,
-  CopyStates::S,
-  0 };
-static constexpr auto outArray =
-  StaticTuringMachine<CopyAlphabet, CopyStates, decltype(CopyTransitionFunction)>::compute<4, config>();
+  // Compute final tape.
+  static constexpr auto outputArray =
+    StaticTuringMachine<Alphabet, States, decltype(TransitionFunction)>::compute<initialConfiguration>();
 
-static_assert(
-  outArray
-  == std::array{ CopyAlphabet::START, CopyAlphabet::ZERO, CopyAlphabet::ONE, CopyAlphabet::ONE, CopyAlphabet::END });
+  // Assert this matches what we expect.
+  static_assert(
+    outputArray == std::array{ Alphabet::START, Alphabet::ZERO, Alphabet::ONE, Alphabet::ONE, Alphabet::END });
+}// namespace test1
 
-int main()
-{
-  return 0;
-}
+// Test 2
+namespace test2 {
+  // Define initial state.
+  static constexpr std::array initialArray{ Alphabet::START,
+    Alphabet::ONE,
+    Alphabet::ONE,
+    Alphabet::ZERO,
+    Alphabet::ONE,
+    Alphabet::ZERO,
+    Alphabet::END };
+  static constexpr Configuration<Alphabet, States, std::decay_t<decltype(initialArray)>> initialConfiguration{
+    initialArray,
+    States::S,
+    0
+  };
+
+  // Compute final tape.
+  static constexpr auto outputArray =
+    StaticTuringMachine<Alphabet, States, decltype(TransitionFunction)>::compute<initialConfiguration>();
+
+  // Assert this matches what we expect.
+  static_assert(outputArray
+                == std::array{ Alphabet::START,
+                  Alphabet::ZERO,
+                  Alphabet::ONE,
+                  Alphabet::ONE,
+                  Alphabet::ZERO,
+                  Alphabet::ONE,
+                  Alphabet::ZERO,
+                  Alphabet::END });
+
+}// namespace test2
+
+}// namespace PrependTest
+
+int main() { return 0; }

@@ -6,8 +6,9 @@
 namespace turing {
 template<IsAlphabet Alphabet, IsState State, IsTape<Alphabet> Tape> struct Configuration
 {
+  static constexpr std::size_t TapeSize = std::tuple_size<Tape>::value;
   Tape tape;
   State state;
-  size_t head;
+  std::size_t head;
 };
 }// namespace turing
